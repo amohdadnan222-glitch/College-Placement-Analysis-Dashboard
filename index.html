@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>College Placement Analysis Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0F1B2D;
+  --panel:#152540;
+  --panel-2:#1B2E4D;
+  --line:#2A3F60;
+  --text:#EDEFF3;
+  --muted:#93A1BC;
+  --gold:#E8A33D;
+  --gold-soft:rgba(232,163,61,.14);
+  --teal:#4FD1C5;
+  --teal-soft:rgba(79,209,197,.14);
+  --rose:#E4667A;
+  --rose-soft:rgba(228,102,122,.14);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:
+    radial-gradient(1200px 600px at 90% -10%, rgba(232,163,61,.08), transparent 60%),
+    radial-gradient(1000px 500px at -10% 10%, rgba(79,209,197,.07), transparent 55%),
+    var(--bg);
+  color:var(--text);
+  font-family:'Inter',sans-serif;
+  min-height:100vh;
+}
+::selection{background:var(--gold-soft);}
+a{color:inherit;}
+
+.ledger-tick{
+  background:var(--panel-2);
+  border-bottom:1px solid var(--line);
+  overflow:hidden;
+  white-space:nowrap;
+  padding:7px 0;
+}
+.ledger-tick .track{
+  display:inline-block;
+  animation:scroll-left 38s linear infinite;
+}
+.ledger-tick span{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  color:var(--muted);
+  margin:0 28px;
+  letter-spacing:.02em;
+}
+.ledger-tick b{color:var(--gold);font-weight:600;}
+@keyframes scroll-left{
+  from{transform:translateX(0);}
+  to{transform:translateX(-50%);}
+}
+
+header.topbar{
+  padding:44px 5vw 28px;
+  border-bottom:1px solid var(--line);
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  flex-wrap:wrap;
+  gap:24px;
+}
+.brand-eyebrow{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11.5px;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--teal);
+  margin-bottom:10px;
+}
+h1.brand-title{
+  font-family:'Fraunces',serif;
+  font-weight:600;
+  font-size:clamp(28px,4vw,44px);
+  margin:0 0 8px;
+  letter-spacing:-.01em;
+}
+.brand-sub{
+  color:var(--muted);
+  font-size:14.5px;
+  max-width:560px;
+  line-height:1.55;
+}
+.sim-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  letter-spacing:.04em;
+  color:var(--gold);
+  background:var(--gold-soft);
+  border:1px solid rgba(232,163,61,.35);
+  padding:7px 12px;
+  border-radius:100px;
+  margin-top:12px;
+}
+.sim-badge::before{content:"●";font-size:8px;}
+
+.hero-stat{
+  text-align:right;
+}
+.hero-stat .num{
+  font-family:'Fraunces',serif;
+  font-weight:600;
+  font-size:clamp(40px,5.5vw,64px);
+  color:var(--teal);
+  line-height:1;
+}
+.hero-stat .lbl{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11.5px;
+  color:var(--muted);
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  margin-top:6px;
+}
+
+.filters-bar{
+  padding:18px 5vw;
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  align-items:center;
+  border-bottom:1px solid var(--line);
+  background:rgba(255,255,255,.015);
+}
+.filters-bar label{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10.5px;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  display:block;
+  margin-bottom:4px;
+}
+.filt-group{display:flex;flex-direction:column;}
+select{
+  background:var(--panel);
+  border:1px solid var(--line);
+  color:var(--text);
+  padding:8px 10px;
+  border-radius:8px;
+  font-family:'Inter',sans-serif;
+  font-size:13px;
+  min-width:140px;
+  outline:none;
+}
+select:focus{border-color:var(--teal);}
+#resetFilters{
+  background:transparent;
+  border:1px solid var(--line);
+  color:var(--muted);
+  padding:9px 16px;
+  border-radius:8px;
+  font-family:'Inter',sans-serif;
+  font-size:13px;
+  cursor:pointer;
+  align-self:flex-end;
+  transition:.15s;
+}
+#resetFilters:hover{border-color:var(--rose);color:var(--rose);}
+.filt-count{
+  margin-left:auto;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  color:var(--muted);
+  align-self:flex-end;
+  padding-bottom:9px;
+}
+.filt-count b{color:var(--text);}
+
+nav.tabs{
+  display:flex;
+  gap:2px;
+  padding:0 5vw;
+  border-bottom:1px solid var(--line);
+  overflow-x:auto;
+}
+nav.tabs button{
+  background:none;
+  border:none;
+  color:var(--muted);
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12.5px;
+  padding:16px 18px;
+  cursor:pointer;
+  white-space:nowrap;
+  border-bottom:2px solid transparent;
+  transition:.15s;
+}
+nav.tabs button b{color:var(--gold);margin-right:8px;font-weight:600;}
+nav.tabs button:hover{color:var(--text);}
+nav.tabs button.active{color:var(--text);border-bottom-color:var(--teal);}
+
+main{padding:32px 5vw 80px;}
+
+.kpi-row{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:14px;
+  margin-bottom:36px;
+}
+.kpi{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:18px 16px;
+}
+.kpi .lbl{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:var(--muted);
+  margin-bottom:10px;
+}
+.kpi .val{
+  font-family:'Fraunces',serif;
+  font-size:26px;
+  font-weight:600;
+}
+.kpi.gold .val{color:var(--gold);}
+.kpi.teal .val{color:var(--teal);}
+
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+.section-head{
+  display:flex;
+  align-items:baseline;
+  gap:12px;
+  margin:0 0 6px;
+}
+.section-head .idx{
+  font-family:'IBM Plex Mono',monospace;
+  color:var(--gold);
+  font-size:13px;
+}
+.section-head h2{
+  font-family:'Fraunces',serif;
+  font-weight:600;
+  font-size:22px;
+  margin:0;
+}
+.section-note{
+  color:var(--muted);
+  font-size:13.5px;
+  margin:0 0 22px;
+  max-width:680px;
+  line-height:1.55;
+}
+
+.chart-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(360px,1fr));
+  gap:18px;
+  margin-bottom:40px;
+}
+.chart-card{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:20px 20px 14px;
+}
+.chart-card h3{
+  font-family:'Inter',sans-serif;
+  font-size:14px;
+  font-weight:600;
+  margin:0 0 2px;
+}
+.chart-card .what{
+  color:var(--muted);
+  font-size:12px;
+  margin:0 0 14px;
+  line-height:1.5;
+}
+.chart-card canvas{max-height:260px;}
+.chart-card .insight{
+  margin-top:12px;
+  padding-top:12px;
+  border-top:1px dashed var(--line);
+  font-size:12.5px;
+  color:var(--teal);
+  line-height:1.5;
+}
+.chart-card .insight b{color:var(--gold);}
+
+.insights-list{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+  gap:14px;
+  margin-bottom:40px;
+}
+.insight-card{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-left:3px solid var(--teal);
+  border-radius:10px;
+  padding:16px 18px;
+  font-size:13.5px;
+  line-height:1.6;
+}
+.insight-card .n{
+  font-family:'IBM Plex Mono',monospace;
+  color:var(--gold);
+  font-size:11px;
+  display:block;
+  margin-bottom:6px;
+}
+
+.reco-list{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+.reco-item{
+  display:flex;
+  gap:14px;
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:14px 18px;
+  align-items:flex-start;
+}
+.reco-item .tag{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;
+  color:var(--bg);
+  background:var(--teal);
+  padding:4px 8px;
+  border-radius:5px;
+  white-space:nowrap;
+  margin-top:2px;
+}
+.reco-item p{margin:0;font-size:13.5px;line-height:1.55;color:var(--text);}
+
+.data-toolbar{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  margin-bottom:16px;
+  flex-wrap:wrap;
+}
+.data-toolbar input[type=text]{
+  background:var(--panel);
+  border:1px solid var(--line);
+  color:var(--text);
+  padding:9px 12px;
+  border-radius:8px;
+  font-family:'Inter',sans-serif;
+  font-size:13px;
+  min-width:220px;
+}
+.btn-primary{
+  background:var(--gold);
+  color:#1A1305;
+  border:none;
+  padding:10px 18px;
+  border-radius:8px;
+  font-family:'Inter',sans-serif;
+  font-weight:600;
+  font-size:13px;
+  cursor:pointer;
+}
+.btn-primary:hover{opacity:.9;}
+.table-wrap{
+  border:1px solid var(--line);
+  border-radius:12px;
+  overflow:auto;
+  max-height:560px;
+  background:var(--panel);
+}
+table{border-collapse:collapse;width:100%;font-size:12px;font-family:'IBM Plex Mono',monospace;}
+thead th{
+  position:sticky;top:0;
+  background:var(--panel-2);
+  color:var(--muted);
+  text-align:left;
+  padding:10px 12px;
+  border-bottom:1px solid var(--line);
+  white-space:nowrap;
+}
+tbody td{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.04);white-space:nowrap;}
+tbody tr:hover{background:rgba(255,255,255,.03);}
+.status-placed{color:var(--teal);}
+.status-not{color:var(--rose);}
+.table-note{color:var(--muted);font-size:12px;margin-top:10px;}
+
+.arch-strip{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:center;
+  margin:26px 0 40px;
+}
+.arch-node{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:9px;
+  padding:10px 14px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  color:var(--text);
+}
+.arch-arrow{color:var(--muted);font-size:14px;}
+
+footer{
+  padding:26px 5vw 40px;
+  border-top:1px solid var(--line);
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.6;
+}
+
+@media(max-width:900px){
+  .kpi-row{grid-template-columns:repeat(2,1fr);}
+  header.topbar{flex-direction:column;align-items:flex-start;}
+  .hero-stat{text-align:left;}
+}
+</style>
+</head>
+<body>
+
+<div class="ledger-tick"><div class="track" id="tickerTrack"></div></div>
+
+<header class="topbar">
+  <div>
+    <div class="brand-eyebrow">B.Tech Final Year · Data Analytics Project</div>
+    <h1 class="brand-title">College Placement Analysis Dashboard</h1>
+    <div class="brand-sub">An end-to-end analytics view of student placement outcomes — academic performance, skills, internships and package trends — built to surface which factors actually move placement probability.</div>
+    <div class="sim-badge">Simulated academic dataset — not actual college placement records</div>
+  </div>
+  <div class="hero-stat">
+    <div class="num" id="heroRate">—</div>
+    <div class="lbl">Overall Placement Rate</div>
+  </div>
+</header>
+
+<div class="filters-bar">
+  <div class="filt-group"><label>Branch</label><select id="f-branch"></select></div>
+  <div class="filt-group"><label>Gender</label><select id="f-gender"></select></div>
+  <div class="filt-group"><label>Placement Year</label><select id="f-year"></select></div>
+  <div class="filt-group"><label>Internship</label><select id="f-internship"></select></div>
+  <div class="filt-group"><label>Placement Status</label><select id="f-status"></select></div>
+  <div class="filt-group"><label>Company Type</label><select id="f-company"></select></div>
+  <button id="resetFilters">Reset filters</button>
+  <div class="filt-count"><b id="filtCount">0</b> / <span id="filtTotal">0</span> students in view</div>
+</div>
+
+<nav class="tabs">
+  <button data-tab="overview" class="active"><b>01</b>Overview</button>
+  <button data-tab="performance"><b>02</b>Student Performance</button>
+  <button data-tab="skills"><b>03</b>Skills &amp; Experience</button>
+  <button data-tab="salary"><b>04</b>Salary Analysis</button>
+  <button data-tab="insights"><b>05</b>Insights &amp; Recommendations</button>
+  <button data-tab="dataset"><b>06</b>Dataset</button>
+</nav>
+
+<main>
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="lbl">Total Students</div><div class="val" id="k-total">—</div></div>
+    <div class="kpi teal"><div class="lbl">Placed Students</div><div class="val" id="k-placed">—</div></div>
+    <div class="kpi teal"><div class="lbl">Placement Rate</div><div class="val" id="k-rate">—</div></div>
+    <div class="kpi gold"><div class="lbl">Average Package</div><div class="val" id="k-avgpkg">—</div></div>
+    <div class="kpi gold"><div class="lbl">Highest Package</div><div class="val" id="k-maxpkg">—</div></div>
+    <div class="kpi"><div class="lbl">Average CGPA</div><div class="val" id="k-cgpa">—</div></div>
+  </div>
+
+  <!-- TAB 01 OVERVIEW -->
+  <section class="tab-panel active" id="tab-overview">
+    <div class="section-head"><span class="idx">01</span><h2>Placement Overview</h2></div>
+    <p class="section-note">The top-line shape of the cohort: how many students got placed, which branches lead, and how the rate has moved year over year.</p>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h3>Placement Status Distribution</h3>
+        <p class="what">Placed vs. not-placed students in the filtered cohort.</p>
+        <canvas id="chartStatus"></canvas>
+        <div class="insight" id="ins-status"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Placement Rate by Branch</h3>
+        <p class="what">Which branch converts the highest share of its students into offers.</p>
+        <canvas id="chartBranchRate"></canvas>
+        <div class="insight" id="ins-branchrate"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Placement Trend by Year</h3>
+        <p class="what">Placement rate across the years present in the dataset.</p>
+        <canvas id="chartTrend"></canvas>
+        <div class="insight" id="ins-trend"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 02 PERFORMANCE -->
+  <section class="tab-panel" id="tab-performance">
+    <div class="section-head"><span class="idx">02</span><h2>Student Performance</h2></div>
+    <p class="section-note">Do academic and aptitude metrics actually track with getting placed? Each chart buckets students by score range and plots the placement rate inside that bucket.</p>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h3>CGPA vs Placement</h3>
+        <p class="what">Placement rate across CGPA bands.</p>
+        <canvas id="chartCgpa"></canvas>
+        <div class="insight" id="ins-cgpa"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Attendance vs Placement</h3>
+        <p class="what">Placement rate across attendance bands.</p>
+        <canvas id="chartAttendance"></canvas>
+        <div class="insight" id="ins-attendance"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Coding Score vs Placement</h3>
+        <p class="what">Placement rate across coding-test score bands.</p>
+        <canvas id="chartCoding"></canvas>
+        <div class="insight" id="ins-coding"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Aptitude Score vs Placement</h3>
+        <p class="what">Placement rate across aptitude-test score bands.</p>
+        <canvas id="chartAptitude"></canvas>
+        <div class="insight" id="ins-aptitude"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 03 SKILLS -->
+  <section class="tab-panel" id="tab-skills">
+    <div class="section-head"><span class="idx">03</span><h2>Skills &amp; Experience</h2></div>
+    <p class="section-note">Internships, projects, certifications and backlogs — the parts of a student's profile that are built through effort rather than inherited from Class 10/12 marks.</p>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h3>Internship vs Placement</h3>
+        <p class="what">Placement rate for students with and without internship experience.</p>
+        <canvas id="chartInternship"></canvas>
+        <div class="insight" id="ins-internship"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Backlogs vs Placement</h3>
+        <p class="what">Placement rate falls as active backlog count rises.</p>
+        <canvas id="chartBacklogs"></canvas>
+        <div class="insight" id="ins-backlogs"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Projects vs Placement</h3>
+        <p class="what">Placement rate by number of academic/personal projects completed.</p>
+        <canvas id="chartProjects"></canvas>
+        <div class="insight" id="ins-projects"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Certifications vs Placement</h3>
+        <p class="what">Placement rate by number of certifications earned.</p>
+        <canvas id="chartCerts"></canvas>
+        <div class="insight" id="ins-certs"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 04 SALARY -->
+  <section class="tab-panel" id="tab-salary">
+    <div class="section-head"><span class="idx">04</span><h2>Salary Analysis</h2></div>
+    <p class="section-note">Package outcomes for placed students only — by branch, by role, and the overall spread.</p>
+    <div class="chart-grid">
+      <div class="chart-card">
+        <h3>Average Package by Branch</h3>
+        <p class="what">Mean LPA offered to placed students, grouped by branch.</p>
+        <canvas id="chartPkgBranch"></canvas>
+        <div class="insight" id="ins-pkgbranch"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Package Distribution</h3>
+        <p class="what">How offered packages are spread across LPA bands.</p>
+        <canvas id="chartPkgDist"></canvas>
+        <div class="insight" id="ins-pkgdist"></div>
+      </div>
+      <div class="chart-card">
+        <h3>Average Package by Job Role</h3>
+        <p class="what">Mean LPA by the role a student was placed into.</p>
+        <canvas id="chartPkgRole"></canvas>
+        <div class="insight" id="ins-pkgrole"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 05 INSIGHTS -->
+  <section class="tab-panel" id="tab-insights">
+    <div class="section-head"><span class="idx">05</span><h2>Key Insights</h2></div>
+    <p class="section-note">Generated live from the current dataset — every number below is calculated, not assumed.</p>
+    <div class="insights-list" id="insightsList"></div>
+
+    <div class="section-head"><span class="idx">05b</span><h2>Recommendations</h2></div>
+    <p class="section-note">Directly connected to the insights above.</p>
+    <div class="reco-list" id="recoList"></div>
+
+    <div class="section-head"><span class="idx">05c</span><h2>Project Architecture</h2></div>
+    <p class="section-note">The workflow this dashboard sits at the end of.</p>
+    <div class="arch-strip">
+      <div class="arch-node">Dataset</div><div class="arch-arrow">→</div>
+      <div class="arch-node">Data Cleaning</div><div class="arch-arrow">→</div>
+      <div class="arch-node">Excel</div><div class="arch-arrow">→</div>
+      <div class="arch-node">SQL</div><div class="arch-arrow">→</div>
+      <div class="arch-node">Python / Pandas / EDA</div><div class="arch-arrow">→</div>
+      <div class="arch-node">This Dashboard</div><div class="arch-arrow">→</div>
+      <div class="arch-node">Insights</div><div class="arch-arrow">→</div>
+      <div class="arch-node">Recommendations</div>
+    </div>
+  </section>
+
+  <!-- TAB 06 DATASET -->
+  <section class="tab-panel" id="tab-dataset">
+    <div class="section-head"><span class="idx">06</span><h2>Dataset</h2></div>
+    <p class="section-note">First 200 matching rows shown below. Use the search box to filter by Student ID, branch or job role. The full simulated dataset can be downloaded as CSV for use in Excel, SQL or Python.</p>
+    <div class="data-toolbar">
+      <input type="text" id="tableSearch" placeholder="Search Student ID / Branch / Job Role…">
+      <button class="btn-primary" id="downloadCsv">Download full dataset (CSV)</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr id="tableHead"></tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+    <p class="table-note">Simulated / academic data generated for coursework purposes. Relationships between CGPA, attendance, internships, backlogs and placement are intentionally modelled with realistic noise — not perfectly linear — to mirror real-world unpredictability.</p>
+  </section>
+
+</main>
+
+<footer>
+  College Placement Analysis Dashboard — B.Tech Data Analytics Project. Dataset is synthetically generated in-browser (no external data source) and regenerates identically on reload via a fixed seed. Figures shown are illustrative and must not be cited as real placement statistics of any institution.
+</footer>
+
+<script>
+/* ============================= 1. DATA GENERATION ============================= */
+function mulberry32(a){
+  return function(){
+    a|=0;a=a+0x6D2B79F5|0;
+    let t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return((t^t>>>14)>>>0)/4294967296;
+  }
+}
+const rand = mulberry32(20260812);
+function u(){return rand();}
+function clip(v,lo,hi){return Math.max(lo,Math.min(hi,v));}
+function normal(mean,sd){
+  let a=u(),b=u();
+  let z=Math.sqrt(-2*Math.log(a||1e-9))*Math.cos(2*Math.PI*b);
+  return mean+z*sd;
+}
+function poisson(lambda){
+  lambda=Math.max(lambda,0.01);
+  let L=Math.exp(-lambda),k=0,p=1;
+  do{k++;p*=u();}while(p>L);
+  return k-1;
+}
+function choice(arr,weights){
+  if(!weights){return arr[Math.floor(u()*arr.length)];}
+  const sum=weights.reduce((a,b)=>a+b,0);
+  let r=u()*sum;
+  for(let i=0;i<arr.length;i++){r-=weights[i];if(r<=0)return arr[i];}
+  return arr[arr.length-1];
+}
+function sigmoid(x){return 1/(1+Math.exp(-x));}
+
+const BRANCHES=['CSE','IT','ECE','AIML','MECH','CIVIL'];
+const BRANCH_FACTOR={CSE:1.6,IT:1.3,AIML:1.9,ECE:0.6,MECH:0.1,CIVIL:-0.2};
+const BRANCH_BASE_RATE={CSE:0.08,IT:0.05,AIML:0.1,ECE:0,MECH:-0.06,CIVIL:-0.09};
+const COMPANY_TYPES=['Product-Based','Service-Based','Startup','Analytics/Consulting','Core/Manufacturing'];
+const JOB_ROLES_TECH=['Software Engineer','Associate Developer','System Engineer','QA Engineer','Data Analyst','ML Engineer','Network Engineer'];
+const JOB_ROLES_CORE=['Design Engineer','Site Engineer','Production Engineer','Business Analyst'];
+
+function genStudent(id){
+  const branch=choice(BRANCHES);
+  const gender=choice(['Male','Female'],[0.62,0.38]);
+  const age=Math.round(clip(normal(21,1),19,24));
+  const semester=choice([6,7,8]);
+  const cgpa=clip(normal(7.2,1.0),4.8,10);
+  const p10=clip(normal(82,8),52,99);
+  const p12=clip(normal(78,9),48,98);
+  const attendance=clip(normal(77,12),35,100);
+  const backlogLambda=Math.max(0,(7.4-cgpa))*1.15;
+  const backlogs=clip(poisson(backlogLambda),0,7);
+  const pInternship=clip(0.22+(cgpa-7)*0.11+(BRANCH_FACTOR[branch]*0.03),0.04,0.88);
+  const internship=u()<pInternship;
+  const internshipMonths=internship?Math.round(clip(normal(3,1.4),1,6)):0;
+  const projects=clip(poisson(1.8+(cgpa-7)*0.5+(internship?0.6:0)),0,9);
+  const certifications=clip(poisson(1.3+(cgpa-7)*0.35+(internship?0.4:0)),0,6);
+  const techSkills=clip(Math.round(2+projects*0.6+certifications*0.7+normal(0,1.1)),1,12);
+  const communication=clip(normal(64,15)+(cgpa-7)*2,15,100);
+  const aptitude=clip(normal(58,18)+(cgpa-7)*4,5,100);
+  const coding=clip(normal(58,20)+(cgpa-7)*5+(techSkills-5)*1.2,0,100);
+  const softSkills=clip(normal(64,14)+(communication-64)*0.3,15,100);
+
+  const year=choice([2023,2024,2025],[0.28,0.33,0.39]);
+
+  let score = (cgpa-7)*0.85
+    + (attendance-75)/10*0.35
+    + (internship?0.55:0)
+    + (-backlogs)*0.42
+    + (projects-2)/2*0.3
+    + (certifications-1.5)/2*0.22
+    + (coding-58)/20*0.5
+    + (communication-64)/20*0.28
+    + (aptitude-58)/20*0.32
+    + BRANCH_BASE_RATE[branch]
+    + normal(0,0.55);
+  const prob=clip(sigmoid(score*1.15),0.02,0.97);
+  const placed=u()<prob;
+
+  let company_type=null, job_role=null, package_lpa=null, placement_year=null;
+  if(placed){
+    placement_year=year;
+    const isTechBranch = branch!=='MECH' && branch!=='CIVIL';
+    const ctWeights = isTechBranch
+      ? [0.34,0.30,0.14,0.14,0.08]
+      : [0.10,0.12,0.06,0.10,0.62];
+    company_type=choice(COMPANY_TYPES,ctWeights);
+    job_role = isTechBranch ? choice(JOB_ROLES_TECH) : choice(JOB_ROLES_CORE.concat(['System Engineer']));
+    let base=3.4+(cgpa-7)*1.15+(coding-58)/20*1.6+(internship?0.7:0)+BRANCH_FACTOR[branch]*0.7;
+    if(company_type==='Product-Based')base+=2.1;
+    if(company_type==='Analytics/Consulting')base+=1.1;
+    if(company_type==='Startup')base-=0.3;
+    if(company_type==='Core/Manufacturing')base-=0.6;
+    base+=normal(0,0.9);
+    if(u()<0.035) base*=1.8+u()*1.4; // rare high outliers
+    package_lpa=Math.round(clip(base,2.6,48)*10)/10;
+  }
+
+  return {
+    Student_ID:'STU'+String(id).padStart(4,'0'),
+    Gender:gender, Age:age, Branch:branch, Semester:semester,
+    CGPA:Math.round(cgpa*100)/100,
+    Tenth_Percentage:Math.round(p10*10)/10,
+    Twelfth_Percentage:Math.round(p12*10)/10,
+    Attendance_Percentage:Math.round(attendance*10)/10,
+    Backlogs:backlogs,
+    Internship:internship?'Yes':'No',
+    Internship_Duration_Months:internshipMonths,
+    Projects_Count:projects,
+    Certifications_Count:certifications,
+    Technical_Skills_Count:techSkills,
+    Communication_Score:Math.round(communication),
+    Aptitude_Score:Math.round(aptitude),
+    Coding_Score:Math.round(coding),
+    Soft_Skills_Score:Math.round(softSkills),
+    Placement_Status:placed?'Placed':'Not Placed',
+    Company_Type:company_type,
+    Job_Role:job_role,
+    Package_LPA:package_lpa,
+    Placement_Year:placement_year,
+    Cohort_Year:year
+  };
+}
+
+const N=1500;
+const DATA=[];
+for(let i=1;i<=N;i++)DATA.push(genStudent(i));
+
+/* ============================= 2. FILTER STATE ============================= */
+function uniq(arr,key){return [...new Set(arr.map(d=>d[key]).filter(v=>v!==null&&v!==undefined))].sort();}
+
+function fillSelect(id,values,label){
+  const el=document.getElementById(id);
+  el.innerHTML='<option value="ALL">All '+label+'</option>'+values.map(v=>`<option value="${v}">${v}</option>`).join('');
+}
+fillSelect('f-branch',BRANCHES,'branches');
+fillSelect('f-gender',uniq(DATA,'Gender'),'genders');
+fillSelect('f-year',uniq(DATA,'Cohort_Year'),'years');
+fillSelect('f-internship',['Yes','No'],'internship');
+fillSelect('f-status',['Placed','Not Placed'],'status');
+fillSelect('f-company',uniq(DATA,'Company_Type'),'company types');
+
+function currentFilters(){
+  return {
+    branch:document.getElementById('f-branch').value,
+    gender:document.getElementById('f-gender').value,
+    year:document.getElementById('f-year').value,
+    internship:document.getElementById('f-internship').value,
+    status:document.getElementById('f-status').value,
+    company:document.getElementById('f-company').value,
+  };
+}
+function applyFilters(){
+  const f=currentFilters();
+  return DATA.filter(d=>{
+    if(f.branch!=='ALL' && d.Branch!==f.branch)return false;
+    if(f.gender!=='ALL' && d.Gender!==f.gender)return false;
+    if(f.year!=='ALL' && String(d.Cohort_Year)!==f.year)return false;
+    if(f.internship!=='ALL' && d.Internship!==f.internship)return false;
+    if(f.status!=='ALL' && d.Placement_Status!==f.status)return false;
+    if(f.company!=='ALL' && d.Company_Type!==f.company)return false;
+    return true;
+  });
+}
+
+['f-branch','f-gender','f-year','f-internship','f-status','f-company'].forEach(id=>{
+  document.getElementById(id).addEventListener('change',render);
+});
+document.getElementById('resetFilters').addEventListener('click',()=>{
+  ['f-branch','f-gender','f-year','f-internship','f-status','f-company'].forEach(id=>{
+    document.getElementById(id).value='ALL';
+  });
+  render();
+});
+
+/* ============================= 3. TABS ============================= */
+document.querySelectorAll('nav.tabs button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ============================= 4. AGGREGATION HELPERS ============================= */
+function rate(list){ if(!list.length)return 0; return list.filter(d=>d.Placement_Status==='Placed').length/list.length*100; }
+function avg(list,key){ const v=list.map(d=>d[key]).filter(x=>x!==null&&x!==undefined); if(!v.length)return 0; return v.reduce((a,b)=>a+b,0)/v.length; }
+function fmtLPA(n){return n.toFixed(2)+' LPA';}
+function fmtPct(n){return n.toFixed(1)+'%';}
+
+function bucketRate(list,bucketFn,order){
+  const groups={};
+  order.forEach(o=>groups[o]=[]);
+  list.forEach(d=>{
+    const b=bucketFn(d);
+    if(groups[b]!==undefined)groups[b].push(d);
+  });
+  return {labels:order, rates:order.map(o=>rate(groups[o])), counts:order.map(o=>groups[o].length)};
+}
+
+/* ============================= 5. CHART.JS SETUP ============================= */
+Chart.defaults.color='#93A1BC';
+Chart.defaults.font.family="'Inter',sans-serif";
+Chart.defaults.font.size=11.5;
+Chart.defaults.borderColor='rgba(255,255,255,.06)';
+const GOLD='#E8A33D', TEAL='#4FD1C5', ROSE='#E4667A', GOLD_SOFT='rgba(232,163,61,.55)', TEAL_SOFT='rgba(79,209,197,.55)';
+
+const gridOpt={grid:{color:'rgba(255,255,255,.06)'},ticks:{color:'#93A1BC'}};
+function baseBarOpts(yLabel){
+  return {
+    responsive:true,
+    plugins:{legend:{display:false}},
+    scales:{ x:gridOpt, y:Object.assign({beginAtZero:true,title:{display:!!yLabel,text:yLabel||'',color:'#93A1BC'}},gridOpt) }
+  };
+}
+
+const charts={};
+function makeBar(id,color){
+  const ctx=document.getElementById(id).getContext('2d');
+  charts[id]=new Chart(ctx,{type:'bar',data:{labels:[],datasets:[{data:[],backgroundColor:color,borderRadius:5,maxBarThickness:38}]},options:baseBarOpts('%')});
+}
+function makeLine(id,color){
+  const ctx=document.getElementById(id).getContext('2d');
+  charts[id]=new Chart(ctx,{type:'line',data:{labels:[],datasets:[{data:[],borderColor:color,backgroundColor:color+'33',fill:true,tension:.35,pointRadius:4,pointBackgroundColor:color}]},options:baseBarOpts('%')});
+}
+function makeDoughnut(id){
+  const ctx=document.getElementById(id).getContext('2d');
+  charts[id]=new Chart(ctx,{type:'doughnut',data:{labels:['Placed','Not Placed'],datasets:[{data:[0,0],backgroundColor:[TEAL,ROSE],borderColor:'#152540',borderWidth:3}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#93A1BC',boxWidth:10,padding:14}}}}});
+}
+
+makeDoughnut('chartStatus');
+makeBar('chartBranchRate',TEAL_SOFT);
+makeLine('chartTrend',GOLD);
+makeBar('chartCgpa',TEAL_SOFT);
+makeBar('chartAttendance',TEAL_SOFT);
+makeBar('chartCoding',TEAL_SOFT);
+makeBar('chartAptitude',TEAL_SOFT);
+makeBar('chartInternship',GOLD_SOFT);
+makeBar('chartBacklogs',ROSE);
+makeBar('chartProjects',GOLD_SOFT);
+makeBar('chartCerts',GOLD_SOFT);
+makeBar('chartPkgBranch',GOLD);
+makeBar('chartPkgDist',GOLD_SOFT);
+makeBar('chartPkgRole',GOLD);
+
+function updateBar(id,labels,data,fmt){
+  const c=charts[id];
+  c.data.labels=labels; c.data.datasets[0].data=data;
+  c.options.plugins.tooltip={callbacks:{label:ctx=>fmt?fmt(ctx.parsed.y):ctx.parsed.y}};
+  c.update();
+}
+
+/* ============================= 6. RENDER ============================= */
+function render(){
+  const filtered=applyFilters();
+  document.getElementById('filtCount').textContent=filtered.length;
+  document.getElementById('filtTotal').textContent=DATA.length;
+
+  const placed=filtered.filter(d=>d.Placement_Status==='Placed');
+  const placementRate=rate(filtered);
+
+  document.getElementById('heroRate').textContent=fmtPct(placementRate);
+  document.getElementById('k-total').textContent=filtered.length.toLocaleString();
+  document.getElementById('k-placed').textContent=placed.length.toLocaleString();
+  document.getElementById('k-rate').textContent=fmtPct(placementRate);
+  document.getElementById('k-avgpkg').textContent=placed.length?fmtLPA(avg(placed,'Package_LPA')):'—';
+  document.getElementById('k-maxpkg').textContent=placed.length?fmtLPA(Math.max(...placed.map(d=>d.Package_LPA))):'—';
+  document.getElementById('k-cgpa').textContent=avg(filtered,'CGPA').toFixed(2);
+
+  // Overview
+  charts.chartStatus.data.datasets[0].data=[placed.length,filtered.length-placed.length];
+  charts.chartStatus.update();
+  document.getElementById('ins-status').innerHTML=`<b>${fmtPct(placementRate)}</b> of the ${filtered.length} students in view were placed.`;
+
+  const branchAgg=BRANCHES.map(b=>({b,r:rate(filtered.filter(d=>d.Branch===b)),n:filtered.filter(d=>d.Branch===b).length})).filter(x=>x.n>0).sort((a,c)=>c.r-a.r);
+  updateBar('chartBranchRate',branchAgg.map(x=>x.b),branchAgg.map(x=>+x.r.toFixed(1)),v=>v+'%');
+  if(branchAgg.length){
+    document.getElementById('ins-branchrate').innerHTML=`<b>${branchAgg[0].b}</b> leads with ${fmtPct(branchAgg[0].r)} placement, vs <b>${branchAgg[branchAgg.length-1].b}</b> at ${fmtPct(branchAgg[branchAgg.length-1].r)}.`;
+  }
+
+  const years=[2023,2024,2025];
+  const trend=years.map(y=>({y,r:rate(filtered.filter(d=>d.Cohort_Year===y))}));
+  updateBar('chartTrend',trend.map(x=>x.y),trend.map(x=>+x.r.toFixed(1)),v=>v+'%');
+  document.getElementById('ins-trend').innerHTML=trend[2].r>trend[0].r
+    ? `Placement rate has moved from ${fmtPct(trend[0].r)} (2023) to <b>${fmtPct(trend[2].r)}</b> (2025).`
+    : `Placement rate moved from ${fmtPct(trend[0].r)} (2023) to <b>${fmtPct(trend[2].r)}</b> (2025).`;
+
+  // Performance
+  const cgpaBuckets=['5-6','6-7','7-8','8-9','9-10'];
+  const cgpaRes=bucketRate(filtered,d=>{
+    if(d.CGPA<6)return'5-6'; if(d.CGPA<7)return'6-7'; if(d.CGPA<8)return'7-8'; if(d.CGPA<9)return'8-9'; return'9-10';
+  },cgpaBuckets);
+  updateBar('chartCgpa',cgpaRes.labels,cgpaRes.rates.map(v=>+v.toFixed(1)),v=>v+'%');
+  document.getElementById('ins-cgpa').innerHTML=`Placement rate rises from <b>${cgpaRes.rates[0].toFixed(1)}%</b> (5–6 CGPA) to <b>${cgpaRes.rates[4].toFixed(1)}%</b> (9–10 CGPA).`;
+
+  const attBuckets=['<60','60-70','70-80','80-90','90-100'];
+  const attRes=bucketRate(filtered,d=>{
+    if(d.Attendance_Percentage<60)return'<60'; if(d.Attendance_Percentage<70)return'60-70'; if(d.Attendance_Percentage<80)return'70-80'; if(d.Attendance_Percentage<90)return'80-90'; return'90-100';
+  },attBuckets);
+  updateBar('chartAttendance',attRes.labels,attRes.rates.map(v=>+v.toFixed(1)),v=>v+'%');
+  document.getElementById('ins-attendance').innerHTML=`Students with 90–100% attendance place at <b>${attRes.rates[4].toFixed(1)}%</b>, vs <b>${attRes.rates[0].toFixed(1)}%</b> for under 60%.`;
+
+  const scoreBuckets=['0-20','20-40','40-60','60-80','80-100'];
+  const bucketScore=key=>d=>{
+    const v=d[key];
+    if(v<20)return'0-20'; if(v<40)return'20-40'; if(v<60)return'40-60'; if(v<80)return'60-80'; return'80-100';
+  };
+  const codingRes=bucketRate(filtered,bucketScore('Coding_Score'),scoreBuckets);
+  updateBar('chartCoding',codingRes.labels,codingRes.rates.map(v=>+v.toFixed(1)),v=>v+'%');
+  document.getElementById('ins-coding').innerHTML=`Top coding-score band (80–100) places at <b>${codingRes.rates[4].toFixed(1)}%</b> vs <b>${codingRes.rates[0].toFixed(1)}%</b> at the bottom.`;
+
+  const aptRes=bucketRate(filtered,bucketScore('Aptitude_Score'),scoreBuckets);
+  updateBar('chartAptitude',aptRes.labels,aptRes.rates.map(v=>+v.toFixed(1)),v=>v+'%');
+  document.getElementById('ins-aptitude').innerHTML=`Aptitude shows a similar climb: <b>${aptRes.rates[4].toFixed(1)}%</b> at 80–100 vs <b>${aptRes.rates[0].toFixed(1)}%</b> at 0–20.`;
+
+  // Skills
+  const withIntern=filtered.filter(d=>d.Internship==='Yes'), noIntern=filtered.filter(d=>d.Internship==='No');
+  updateBar('chartInternship',['With Internship','Without Internship'],[+rate(withIntern).toFixed(1),+rate(noIntern).toFixed(1)],v=>v+'%');
+  document.getElementById('ins-internship').innerHTML=`Interned students place at <b>${fmtPct(rate(withIntern))}</b> vs <b>${fmtPct(rate(noIntern))}</b> for those without — a gap, but not a guarantee.`;
+
+  const backBuckets=['0','1','2','3','4+'];
+  const backRes=bucketRate(filtered,d=>d.Backlogs>=4?'4+':String(d.Backlogs),backBuckets);
+  updateBar('chartBacklogs',backRes.labels,backRes.rates.map(v=>+v.toFixed(1)),v=>v+'%');
+  document.getElementById('ins-backlogs').innerHTML=`Zero-backlog students place at <b>${backRes.rates[0].toFixed(1)}%</b>, falling to <b>${backRes.rates[4].toFixed(1)}%</b> at 4+ backlogs.`;
+
+  const projBuckets=['0','1','2','3','4','5+'];
+  const projRes=bucketRate(filtered,d=>d.Projects_Count>=5?'5+':String(d.Projects_Count),projBuckets);
+  updateBar('chartProjects',projRes.labels,projRes.rates.map(v=>+v.toFixed(1)),v=>v+'%');
+  document.getElementById('ins-projects').innerHTML=`Placement rate climbs from <b>${projRes.rates[0].toFixed(1)}%</b> (0 projects) to <b>${projRes.rates[5].toFixed(1)}%</b> (5+ projects).`;
+
+  const certBuckets=['0','1','2','3','4+'];
+  const certRes=bucketRate(filtered,d=>d.Certifications_Count>=4?'4+':String(d.Certifications_Count),certBuckets);
+  updateBar('chartCerts',certRes.labels,certRes.rates.map(v=>+v.toFixed(1)),v=>v+'%');
+  document.getElementById('ins-certs').innerHTML=`Students with 4+ certifications place at <b>${certRes.rates[4].toFixed(1)}%</b> vs <b>${certRes.rates[0].toFixed(1)}%</b> with none.`;
+
+  // Salary
+  const pkgBranchAgg=BRANCHES.map(b=>({b,v:avg(placed.filter(d=>d.Branch===b),'Package_LPA')})).filter(x=>!isNaN(x.v)).sort((a,c)=>c.v-a.v);
+  updateBar('chartPkgBranch',pkgBranchAgg.map(x=>x.b),pkgBranchAgg.map(x=>+x.v.toFixed(2)),v=>v.toFixed(2)+' LPA');
+  if(pkgBranchAgg.length)document.getElementById('ins-pkgbranch').innerHTML=`<b>${pkgBranchAgg[0].b}</b> has the highest average package at ${fmtLPA(pkgBranchAgg[0].v)}.`;
+
+  const pkgBuckets=['<4','4-6','6-8','8-12','12-20','20+'];
+  const pkgDist=pkgBuckets.map(b=>0);
+  placed.forEach(d=>{
+    const v=d.Package_LPA;
+    let i;
+    if(v<4)i=0; else if(v<6)i=1; else if(v<8)i=2; else if(v<12)i=3; else if(v<20)i=4; else i=5;
+    pkgDist[i]++;
+  });
+  updateBar('chartPkgDist',pkgBuckets,pkgDist);
+  document.getElementById('ins-pkgdist').innerHTML=`Most placed students fall in the ${pkgBuckets[pkgDist.indexOf(Math.max(...pkgDist))]} LPA band.`;
+
+  const roleAgg={};
+  placed.forEach(d=>{ if(!d.Job_Role)return; roleAgg[d.Job_Role]=roleAgg[d.Job_Role]||[]; roleAgg[d.Job_Role].push(d.Package_LPA); });
+  const roleList=Object.entries(roleAgg).map(([k,v])=>({role:k,avg:v.reduce((a,b)=>a+b,0)/v.length,n:v.length})).sort((a,c)=>c.avg-a.avg).slice(0,8);
+  updateBar('chartPkgRole',roleList.map(x=>x.role),roleList.map(x=>+x.avg.toFixed(2)),v=>v.toFixed(2)+' LPA');
+  if(roleList.length)document.getElementById('ins-pkgrole').innerHTML=`<b>${roleList[0].role}</b> commands the highest average package at ${fmtLPA(roleList[0].avg)}.`;
+
+  renderInsightsTab(filtered,placed);
+  renderTable(filtered);
+  renderTicker();
+}
+
+/* ============================= 7. INSIGHTS + RECOMMENDATIONS TAB ============================= */
+function renderInsightsTab(filtered,placed){
+  const overallRate=rate(filtered);
+  const branchAgg=BRANCHES.map(b=>({b,r:rate(filtered.filter(d=>d.Branch===b))})).sort((a,c)=>c.r-a.r);
+  const topBranch=branchAgg[0], lowBranch=branchAgg[branchAgg.length-1];
+  const withIntern=filtered.filter(d=>d.Internship==='Yes'), noIntern=filtered.filter(d=>d.Internship==='No');
+  const zeroBack=filtered.filter(d=>d.Backlogs===0), highBack=filtered.filter(d=>d.Backlogs>=3);
+  const avgPkg=placed.length?avg(placed,'Package_LPA'):0;
+  const pkgBranchAgg=BRANCHES.map(b=>({b,v:avg(placed.filter(d=>d.Branch===b),'Package_LPA')})).filter(x=>!isNaN(x.v)&&x.v>0).sort((a,c)=>c.v-a.v);
+  const topPkgBranch=pkgBranchAgg[0];
+  const highCert=filtered.filter(d=>d.Certifications_Count>=4), noCert=filtered.filter(d=>d.Certifications_Count===0);
+  const highProj=filtered.filter(d=>d.Projects_Count>=5), lowProj=filtered.filter(d=>d.Projects_Count===0);
+  const companyAgg={};
+  placed.forEach(d=>{ if(!d.Company_Type)return; companyAgg[d.Company_Type]=(companyAgg[d.Company_Type]||0)+1; });
+  const topCompany=Object.entries(companyAgg).sort((a,b)=>b[1]-a[1])[0];
+  const roleAgg={};
+  placed.forEach(d=>{ if(!d.Job_Role)return; roleAgg[d.Job_Role]=(roleAgg[d.Job_Role]||0)+1; });
+  const topRole=Object.entries(roleAgg).sort((a,b)=>b[1]-a[1])[0];
+  const atRisk=filtered.filter(d=>d.CGPA<6.5 && d.Backlogs>=2 && d.Internship==='No');
+  const atRiskRate=rate(atRisk);
+  const highCoding=filtered.filter(d=>d.Coding_Score>=80);
+
+  const insights=[
+    `Overall placement rate for the current selection stands at <b>${fmtPct(overallRate)}</b> across ${filtered.length} students.`,
+    `<b>${topBranch.b}</b> has the highest placement rate (${fmtPct(topBranch.r)}), while <b>${lowBranch.b}</b> trails at ${fmtPct(lowBranch.r)}.`,
+    `Placement probability rises fairly consistently with CGPA — the trend is directional, not perfectly linear, matching real-world variability.`,
+    `Students with internship experience place at <b>${fmtPct(rate(withIntern))}</b> versus <b>${fmtPct(rate(noIntern))}</b> without — internships help, but don't guarantee an offer.`,
+    `Zero-backlog students place at <b>${fmtPct(rate(zeroBack))}</b>, compared with <b>${fmtPct(rate(highBack))}</b> for students carrying 3 or more backlogs.`,
+    placed.length?`The average package across placed students is <b>${fmtLPA(avgPkg)}</b>, with the highest offer at ${fmtLPA(Math.max(...placed.map(d=>d.Package_LPA)))}.`:`No placed students in the current filter to compute an average package.`,
+    topPkgBranch?`<b>${topPkgBranch.b}</b> commands the highest average package among placed students, at ${fmtLPA(topPkgBranch.v)}.`:``,
+    `Students with 4+ certifications place at <b>${fmtPct(rate(highCert))}</b> versus <b>${fmtPct(rate(noCert))}</b> with none — certifications correlate with, but don't solely determine, outcomes.`,
+    `Students with 5+ projects place at <b>${fmtPct(rate(highProj))}</b> versus <b>${fmtPct(rate(lowProj))}</b> with zero projects on record.`,
+    topCompany?`<b>${topCompany[0]}</b> companies account for the largest share of offers in this cohort (${topCompany[1]} of ${placed.length} placements).`:``,
+    topRole?`<b>${topRole[0]}</b> is the most common job role among placed students (${topRole[1]} offers).`:``,
+    `Students with 80+ coding scores make up ${highCoding.length} of ${filtered.length} in view, and place at <b>${fmtPct(rate(highCoding))}</b>.`,
+    atRisk.length?`A profile of <b>low CGPA (&lt;6.5) + 2 or more backlogs + no internship</b> is placement-vulnerable: only <b>${fmtPct(atRiskRate)}</b> of these ${atRisk.length} students were placed. This is the group most worth targeted support.`:`No students currently match the "at-risk" profile (CGPA &lt;6.5, 2+ backlogs, no internship) in this selection.`
+  ].filter(Boolean);
+
+  document.getElementById('insightsList').innerHTML=insights.map((t,i)=>`<div class="insight-card"><span class="n">INSIGHT ${String(i+1).padStart(2,'0')}</span>${t}</div>`).join('');
+
+  const internGap=(rate(withIntern)-rate(noIntern)).toFixed(1);
+  const backGap=(rate(zeroBack)-rate(highBack)).toFixed(1);
+  const certGap=(rate(highCert)-rate(noCert)).toFixed(1);
+
+  const recos=[
+    [`Internship pipeline`,`Since interned students place ${internGap}pp higher than those without, expand tie-ups with companies for guaranteed 6-week to 3-month internships, especially for ${lowBranch.b} and other lagging branches.`],
+    [`Backlog support`,`With a ${backGap}pp placement gap between zero-backlog and 3+ backlog students, introduce mandatory remedial classes and backlog-clearance drives before the placement season starts.`],
+    [`Coding & aptitude training`,`Coding and aptitude scores show a clear step-up in placement rate at higher bands — run structured coding-test and aptitude bootcamps in the semester before placements begin.`],
+    [`Certification drive`,`Certifications show a ${certGap}pp placement gap — subsidise or bundle industry certifications (cloud, data, core-branch tools) into the curriculum.`],
+    [`Project-based learning`,`Projects track closely with placement outcomes — require at least one substantial, resume-ready project per semester from the 5th semester onward.`],
+    [`Targeted support for at-risk students`,`Students with low CGPA, multiple backlogs and no internship place far below cohort average — create a dedicated mentoring track for this group rather than generic placement training.`],
+    [`Branch-specific push`,`${lowBranch.b} placement rate lags the rest of the cohort — invest in branch-specific company outreach and role-mapping (e.g. analytics/product roles that value the branch's core skills).`],
+    [`Package negotiation readiness`,topPkgBranch?`${topPkgBranch.b} already commands the top average package — replicate its placement-prep approach (interview practice, portfolio review) across other branches.`:`Track average package by branch each year to identify which branch-level interventions are working.`],
+  ];
+  document.getElementById('recoList').innerHTML=recos.map(([tag,text])=>`<div class="reco-item"><span class="tag">${tag}</span><p>${text}</p></div>`).join('');
+}
+
+/* ============================= 8. DATASET TABLE ============================= */
+const TABLE_COLS=['Student_ID','Branch','Gender','Semester','CGPA','Attendance_Percentage','Backlogs','Internship','Projects_Count','Certifications_Count','Coding_Score','Placement_Status','Company_Type','Job_Role','Package_LPA','Cohort_Year'];
+document.getElementById('tableHead').innerHTML=TABLE_COLS.map(c=>`<th>${c.replace(/_/g,' ')}</th>`).join('');
+
+let tableData=DATA;
+function renderTable(filtered){
+  tableData=filtered;
+  const q=document.getElementById('tableSearch').value.trim().toLowerCase();
+  let rows=filtered;
+  if(q){
+    rows=rows.filter(d=>(d.Student_ID.toLowerCase().includes(q))||(d.Branch.toLowerCase().includes(q))||((d.Job_Role||'').toLowerCase().includes(q)));
+  }
+  rows=rows.slice(0,200);
+  document.getElementById('tableBody').innerHTML=rows.map(d=>{
+    const cells=TABLE_COLS.map(c=>{
+      let v=d[c];
+      if(c==='Package_LPA')v=v===null?'—':v.toFixed(1);
+      if(v===null||v===undefined||v==='')v='—';
+      if(c==='Placement_Status')return `<td class="${v==='Placed'?'status-placed':'status-not'}">${v}</td>`;
+      return `<td>${v}</td>`;
+    }).join('');
+    return `<tr>${cells}</tr>`;
+  }).join('');
+}
+document.getElementById('tableSearch').addEventListener('input',()=>renderTable(tableData));
+
+document.getElementById('downloadCsv').addEventListener('click',()=>{
+  const cols=['Student_ID','Gender','Age','Branch','Semester','CGPA','Tenth_Percentage','Twelfth_Percentage','Attendance_Percentage','Backlogs','Internship','Internship_Duration_Months','Projects_Count','Certifications_Count','Technical_Skills_Count','Communication_Score','Aptitude_Score','Coding_Score','Soft_Skills_Score','Placement_Status','Company_Type','Job_Role','Package_LPA','Placement_Year'];
+  let csv=cols.join(',')+'\n';
+  DATA.forEach(d=>{
+    csv+=cols.map(c=>{let v=d[c]; if(v===null||v===undefined)v=''; return v;}).join(',')+'\n';
+  });
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='college_placement_dataset.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+/* ============================= 9. TICKER ============================= */
+function renderTicker(){
+  const items=BRANCHES.map(b=>{
+    const list=DATA.filter(d=>d.Branch===b);
+    return `<span>${b} · Placement <b>${rate(list).toFixed(1)}%</b> · Avg Package <b>${avg(list.filter(d=>d.Placement_Status==='Placed'),'Package_LPA').toFixed(1)} LPA</b></span>`;
+  }).join('');
+  document.getElementById('tickerTrack').innerHTML=items+items;
+}
+
+render();
+</script>
+</body>
+</html>
